@@ -1,0 +1,187 @@
+books:
+- title: Life 3.0
+  author: Max Tegmark
+  work_id: OL19717530W
+- title: Nexus
+  author: Yuval Noah Harari
+  work_id: OL37826293W
+- title: The Alignment Problem
+  author: Brian Christian
+  work_id: OL20781447W
+- title: The Beginning of Infinity
+  author: David Deutsch
+  work_id: OL4325174W
+- title: Human Compatible
+  author: Stuart Russell
+  work_id: OL20492448W
+- title: Deep Work
+  author: Cal Newport
+  work_id: OL17713267W
+- title: The Design of Everyday Things
+  author: Don Norman
+  work_id: OL1879162W
+- title: The Age of AI
+  author: Henry Kissinger
+  work_id: OL24739863W
+- title: The Lessons of History
+  author: Ariel Durant
+  work_id: OL1073956W
+- title: The Information
+  author: James Gleick
+  work_id: OL15586927W
+- title: Superintelligence
+  author: Nick Bostrom
+  work_id: OL17319280W
+- title: On the Shortness of Life
+  author: Lucius Annaeus Seneca
+  work_id: OL28772478W
+- title: Superconvergence
+  author: Jamie Metzl
+  work_id: OL37627313W
+- title: The Square and the Tower
+  author: Niall Ferguson
+  work_id: OL17917966W
+- title: The Sovereign Individual
+  author: James Dale Davidson
+  work_id: OL3350985W
+- title: Complexity
+  author: M. Mitchell Waldrop
+  work_id: OL4300551W
+- title: Sync
+  author: Steven Strogatz
+  work_id: OL3907582W
+- title: Antifragile
+  author: Nassim Nicholas Taleb
+  work_id: OL16726829W
+- title: The Black Swan
+  author: Nassim Nicholas Taleb
+  work_id: OL3295030W
+- title: Thinking in Systems
+  author: Donella Meadows
+  work_id: OL3737036W
+- title: The Selfish Gene
+  author: Richard Dawkins
+  work_id: OL1966488W
+- title: The Vital Question
+  author: Nick Lane
+  work_id: OL19663289W
+- title: Scale
+  author: Geoffrey West
+  work_id: OL17826327W
+- title: Thinking, Fast and Slow
+  author: Daniel Kahneman
+  work_id: OL15992072W
+- title: The Extended Mind
+  author: Annie Murphy Paul
+  work_id: OL21856386W
+- title: The Structure of Scientific Revolutions
+  author: Thomas Samuel Kuhn
+  work_id: OL3259254W
+- title: The Psychology of Money
+  author: Morgan Housel
+  work_id: OL21640039W
+- title: The Singularity Is Near
+  author: Ray Kurzweil
+  work_id: OL1958850W
+- title: Essentialism
+  author: Greg McKeown
+  work_id: OL17043626W
+- title: Influence
+  author: Robert Cialdini
+  work_id: OL37563426W
+- title: Atomic Habits
+  author: James Clear
+  work_id: OL17930368W
+- title: Predictably Irrational
+  author: Dan Ariely
+  work_id: OL9302660W
+- title: Thinking in Bets
+  author: Annie Duke
+  work_id: OL19736287W
+- title: Behave
+  author: Robert Sapolsky
+  work_id: OL17835813W
+- title: Mindset
+  author: Carol Dweck
+  work_id: OL37490159W
+- title: The Righteous Mind
+  author: Jonathan Haidt
+  work_id: OL16568840W
+- title: The Body Keeps the Score
+  author: Bessel van der Kolk
+  work_id: OL18147687W
+- title: Flow
+  author: Mihaly Csikszentmihalyi
+  work_id: OL278571W
+- title: Drive
+  author: Daniel Pink
+  work_id: OL15016965W
+- title: Ikigai
+  author: Héctor García
+  work_id: OL19714233W
+- title: How to Think Like a Roman Emperor
+  author: Donald Robertson
+  work_id: OL20157096W
+- title: Meditations
+  author: Marcus Aurelius
+  work_id: OL1317211W
+- title: Letters from a Stoic
+  author: Seneca
+  work_id: OL29096812W
+- title: The Obstacle Is the Way
+  author: Ryan Holiday
+  work_id: OL19977665W
+- title: Man’s Search for Meaning
+  author: Viktor Frankl
+  work_id: OL35690114M
+- title: The Daily Stoic
+  author: Ryan Holiday
+  work_id: OL20046443W
+- title: The Courage to Be Disliked
+  author: Ichiro Kishimi
+  work_id: OL19744000W
+- title: A Guide to the Good Life
+  author: William Irvine
+  work_id: OL29385798W
+- title: Stillness Is the Key
+  author: Ryan Holiday
+  work_id: OL20879466W
+- title: Outlive
+  author: Peter Attia
+  work_id: OL28148070W
+- title: Four Thousand Weeks
+  author: Oliver Burkeman
+  work_id: OL22355777W
+- title: The Blue Zones
+  author: Dan Buettner
+  work_id: OL14973844W
+- title: Younger Next Year
+  author: Chris Crowley
+  work_id: OL20019914W
+- title: Successful Aging
+  author: Daniel Levitin
+  work_id: OL21356311W
+- title: Emotional Intelligence
+  author: Daniel Goleman
+  work_id: OL1878267W
+- title: Emotional Intelligence 2.0
+  author: Travis Bradberry
+  work_id: OL15189300W
+- title: Never Split the Difference
+  author: Christopher Voss
+  work_id: OL18819818W
+- title: Crucial Conversations
+  author: Kerry Patterson
+  work_id: OL282391W
+- title: Mastery
+  author: Robert Greene
+  work_id: OL17429337W
+- title: The Art of Thinking Clearly
+  author: Rolf Dobelli
+  work_id: OL17940461W
+- title: Clear Thinking
+  author: Shane Parrish
+  work_id: OL34374688W
+- title: Being Mortal
+  author: Atul Gawande
+  work_id: OL17079567W
