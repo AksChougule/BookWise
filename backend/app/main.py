@@ -7,10 +7,16 @@ from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware
 
 from app.api.router import api_router
+from app.api.routes.metrics import router as metrics_router
 from app.middleware.rate_limit import limiter
+from app.observability.logging import configure_logging
+from app.observability.request_id import RequestIDMiddleware
 
+
+configure_logging()
 
 app = FastAPI(title="BookWise API", version="0.1.0")
+app.add_middleware(RequestIDMiddleware)
 
 frontend_origin = os.getenv("FRONTEND_ORIGIN", "http://localhost:5173")
 app.add_middleware(
@@ -30,3 +36,4 @@ def health() -> dict[str, str]:
 
 
 app.include_router(api_router, prefix="/api")
+app.include_router(metrics_router)

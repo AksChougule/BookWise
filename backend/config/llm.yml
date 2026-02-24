@@ -1,0 +1,5 @@
+provider: openai
+model: gpt-5-mini
+temperature: null
+max_output_tokens: 1200
+timeout_seconds: 45
