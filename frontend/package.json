@@ -1,4 +1,11 @@
 {
+  "private": true,
+  "scripts": {
+    "dev": "npm --prefix bookwise run dev",
+    "build": "npm --prefix bookwise run build",
+    "preview": "npm --prefix bookwise run preview",
+    "lint": "npm --prefix bookwise run lint"
+  },
   "dependencies": {
     "@tanstack/react-query": "^5.90.21",
     "autoprefixer": "^10.4.24",
