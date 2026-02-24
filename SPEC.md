@@ -256,7 +256,7 @@ Export PDF
 
 ```yaml
 provider: openai
-model: gpt-5.2
+model: gpt-5-mini
 temperature: 0.4
 max_output_tokens: 1200
 timeout_seconds: 45
