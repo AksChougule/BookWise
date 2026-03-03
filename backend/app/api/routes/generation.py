@@ -15,13 +15,20 @@ from app.services.generation_service import (
     GenerationNotFoundError,
     GenerationOutputValidationError,
     GenerationPreviouslyFailedError,
+    GenerationStatusNotFoundError,
     GenerationUpstreamError,
+    RETRY_AFTER_MS,
     generate_section,
+    get_generation_status,
 )
 
 
 router = APIRouter()
 logger = get_logger(__name__)
+
+
+def _retry_after_seconds(retry_after_ms: int) -> str:
+    return str(max(1, int(retry_after_ms / 1000)))
 
 
 @router.post("/books/{work_id}/generate/{section}")
@@ -66,11 +73,13 @@ async def generate_book_section(
                 "stored": False,
                 "in_progress": True,
                 "retry_after_ms": exc.retry_after_ms,
+                "status": "pending",
                 "cache_key": {
                     "book_id": work_id,
                     "section": section,
                 },
             },
+            headers={"Retry-After": _retry_after_seconds(exc.retry_after_ms)},
         )
     except GenerationPreviouslyFailedError as exc:
         observe_ms("generation.total_ms", (time.perf_counter() - start) * 1000.0, labels={"section": section})
@@ -95,3 +104,29 @@ async def generate_book_section(
     except GenerationUpstreamError:
         observe_ms("generation.total_ms", (time.perf_counter() - start) * 1000.0, labels={"section": section})
         raise HTTPException(status_code=502, detail="OpenAI generation failed")
+
+
+@router.get("/books/{work_id}/generations/{section}/status")
+@limiter.limit("120/minute")
+async def get_book_generation_status(
+    request: Request,
+    work_id: str,
+    section: str,
+) -> JSONResponse:
+    del request
+    try:
+        payload = get_generation_status(book_id=work_id, section=section)
+    except GenerationStatusNotFoundError:
+        return JSONResponse(status_code=404, content={"status": "missing"})
+    except GenerationInvalidSectionError:
+        raise HTTPException(status_code=422, detail="Invalid section")
+
+    if payload.get("status") == "pending":
+        retry_after_ms = int(payload.get("retry_after_ms") or RETRY_AFTER_MS)
+        return JSONResponse(
+            status_code=200,
+            content=payload,
+            headers={"Retry-After": _retry_after_seconds(retry_after_ms)},
+        )
+
+    return JSONResponse(status_code=200, content=payload)

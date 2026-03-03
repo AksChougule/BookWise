@@ -10,6 +10,7 @@ from app.clients.openlibrary import OpenLibraryClientError
 from app.db import session as db_session
 from app.db.models import Book, BookGeneration
 from app.llm.prompts import PROMPT_VERSION, SCHEMA_VERSION
+from app.llm.prompts import build_prompt
 from app.llm.schema_utils import enforce_no_additional_properties
 from app.main import app
 from app.schemas.generation import ChaptersOut, CritiqueOut, KeyIdeasOut, OverviewOut
@@ -132,10 +133,61 @@ def test_pending_row_returns_202_and_no_openai_call(monkeypatch: Any, tmp_path: 
         response = client.post("/api/books/OL123W/generate/overview")
 
     assert response.status_code == 202
+    assert response.headers["Retry-After"] == "2"
     payload = response.json()
     assert payload["in_progress"] is True
-    assert payload["retry_after_ms"] == 500
+    assert payload["status"] == "pending"
+    assert payload["retry_after_ms"] == 2000
     assert calls["openai"] == 0
+
+
+def test_generation_status_pending_returns_retry_after(monkeypatch: Any, tmp_path: Any) -> None:
+    _configure_temp_db(monkeypatch, tmp_path)
+    _insert_book()
+    _insert_generation(book_id="OL123W", section="overview", status="pending", content_json=None, attempt_count=1)
+
+    with TestClient(app) as client:
+        response = client.get("/api/books/OL123W/generations/overview/status")
+
+    assert response.status_code == 200
+    assert response.headers["Retry-After"] == "2"
+    payload = response.json()
+    assert payload["status"] == "pending"
+    assert payload["in_progress"] is True
+    assert payload["retry_after_ms"] == 2000
+
+
+def test_generation_status_complete_returns_complete_payload(monkeypatch: Any, tmp_path: Any) -> None:
+    _configure_temp_db(monkeypatch, tmp_path)
+    _insert_book()
+    _insert_generation(
+        book_id="OL123W",
+        section="overview",
+        status="complete",
+        content_json={"overview": "cached", "reading_time_minutes": 9},
+        attempt_count=1,
+    )
+
+    with TestClient(app) as client:
+        response = client.get("/api/books/OL123W/generations/overview/status")
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["status"] == "complete"
+    assert payload["stored"] is True
+    assert payload["retry_after_ms"] is None
+    assert payload["updated_at"] is not None
+
+
+def test_generation_status_missing_returns_404_shape(monkeypatch: Any, tmp_path: Any) -> None:
+    _configure_temp_db(monkeypatch, tmp_path)
+    _insert_book()
+
+    with TestClient(app) as client:
+        response = client.get("/api/books/OL123W/generations/chapters/status")
+
+    assert response.status_code == 404
+    assert response.json() == {"status": "missing"}
 
 
 def test_complete_row_returns_cached_and_no_openai_call(monkeypatch: Any, tmp_path: Any) -> None:
@@ -299,3 +351,110 @@ def test_generation_schemas_are_strict_for_openai() -> None:
         assert strict_schema.get("type") == "object"
         assert strict_schema.get("additionalProperties") is False
         _assert_object_nodes_disallow_additional_properties(strict_schema)
+
+
+def test_generation_uses_section_max_output_tokens(monkeypatch: Any, tmp_path: Any) -> None:
+    _configure_temp_db(monkeypatch, tmp_path)
+    _insert_book()
+    seen_tokens: dict[str, int] = {}
+
+    class FakeLLMClient:
+        def __init__(self, timeout_seconds: int | None = None) -> None:
+            del timeout_seconds
+
+        async def generate_structured(self, **kwargs: Any) -> dict[str, Any]:
+            cache_key = str(kwargs.get("cache_key", ""))
+            section = cache_key.split(":")[1]
+            seen_tokens[section] = int(kwargs.get("max_output_tokens"))
+            if section == "overview":
+                return {"overview": "A sufficiently long overview for validation.", "reading_time_minutes": 12}
+            if section == "key_ideas":
+                return {"key_ideas": ["One", "Two", "Three"]}
+            if section == "chapters":
+                return {
+                    "chapters": [
+                        {"title": "Chapter 1", "summary": "Summary one is short and clear."},
+                        {"title": "Chapter 2", "summary": "Summary two is short and clear."},
+                        {"title": "Chapter 3", "summary": "Summary three is short and clear."},
+                        {"title": "Chapter 4", "summary": "Summary four is short and clear."},
+                        {"title": "Chapter 5", "summary": "Summary five is short and clear."},
+                    ]
+                }
+            return {
+                "strengths": ["Strong point one", "Strong point two"],
+                "weaknesses": ["Weak point one", "Weak point two"],
+                "who_should_read": ["Readers one", "Readers two"],
+            }
+
+    monkeypatch.setattr("app.services.generation_service.OpenAILLMClient", FakeLLMClient)
+
+    with TestClient(app) as client:
+        assert client.post("/api/books/OL123W/generate/overview").status_code == 200
+        assert client.post("/api/books/OL123W/generate/key_ideas").status_code == 200
+        assert client.post("/api/books/OL123W/generate/chapters").status_code == 200
+        assert client.post("/api/books/OL123W/generate/critique").status_code == 200
+
+    assert seen_tokens["overview"] == 800
+    assert seen_tokens["key_ideas"] == 800
+    assert seen_tokens["chapters"] == 2200
+    assert seen_tokens["critique"] == 1000
+
+
+def test_section_prompts_include_constraints() -> None:
+    chapters_prompt = build_prompt(
+        "chapters",
+        {
+            "title": "Test Title",
+            "authors": "Author",
+            "first_publish_year": 2000,
+            "description": "Desc",
+            "subjects": ["A"],
+        },
+    )
+    key_ideas_prompt = build_prompt(
+        "key_ideas",
+        {
+            "title": "Test Title",
+            "authors": "Author",
+            "first_publish_year": 2000,
+            "description": "Desc",
+            "subjects": ["A"],
+        },
+    )
+    overview_prompt = build_prompt(
+        "overview",
+        {
+            "title": "Test Title",
+            "authors": "Author",
+            "first_publish_year": 2000,
+            "description": "Desc",
+            "subjects": ["A"],
+        },
+    )
+    critique_prompt = build_prompt(
+        "critique",
+        {
+            "title": "Test Title",
+            "authors": "Author",
+            "first_publish_year": 2000,
+            "description": "Desc",
+            "subjects": ["A"],
+        },
+    )
+
+    assert "Return 10–12 chapters." in chapters_prompt
+    assert "Each summary 1 sentence, max 30 words." in chapters_prompt
+    assert "No double quotes inside summaries." in chapters_prompt
+    assert "Return compact JSON only. No pretty formatting." in chapters_prompt
+
+    assert "Return exactly 8 key ideas." in key_ideas_prompt
+    assert "Each key idea must be 12–18 words maximum." in key_ideas_prompt
+    assert "No line breaks inside items." in key_ideas_prompt
+    assert "Return JSON only. No markdown. No pretty formatting." in key_ideas_prompt
+
+    assert "Limit to 150–200 words." in overview_prompt
+    assert "Return JSON only." in overview_prompt
+
+    assert "Return 3–5 strengths, 3–5 weaknesses, 2–4 reader types." in critique_prompt
+    assert "Each item 12–20 words." in critique_prompt
+    assert "Return JSON only." in critique_prompt

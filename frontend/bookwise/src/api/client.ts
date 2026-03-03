@@ -12,6 +12,12 @@ export class ApiError extends Error {
   }
 }
 
+export type JsonResponse<T> = {
+  data: T;
+  headers: Headers;
+  status: number;
+};
+
 const REQUEST_TIMEOUT_MS = 15_000;
 
 function createRequestId(): string {
@@ -52,6 +58,14 @@ export async function requestJson<T>(
   path: string,
   init: RequestInit = {},
 ): Promise<T> {
+  const response = await requestJsonWithMeta<T>(path, init);
+  return response.data;
+}
+
+export async function requestJsonWithMeta<T>(
+  path: string,
+  init: RequestInit = {},
+): Promise<JsonResponse<T>> {
   const timeoutController = new AbortController();
   const timeoutId = window.setTimeout(() => timeoutController.abort(), REQUEST_TIMEOUT_MS);
 
@@ -78,7 +92,11 @@ export async function requestJson<T>(
       throw new ApiError(message, response.status, body);
     }
 
-    return body as T;
+    return {
+      data: body as T,
+      headers: response.headers,
+      status: response.status,
+    };
   } catch (error) {
     if (error instanceof DOMException && error.name === "AbortError") {
       throw new ApiError("Request timed out or was cancelled", 408, null);

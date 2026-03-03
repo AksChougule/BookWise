@@ -1,14 +1,3 @@
-Perfect — below is your **fully updated unified SPEC.md (v0.3)** including:
-
-* ✅ Persistence-first architecture
-* ✅ PDF export
-* ✅ Night mode (Dark theme)
-* ✅ Explicit tests mapped to every acceptance criterion
-
-This is now production-grade spec clarity.
-
----
-
 # BookWise — Product & Technical Spec (v0.3)
 
 ---

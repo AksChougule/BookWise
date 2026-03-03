@@ -4,7 +4,9 @@
     "dev": "npm --prefix bookwise run dev",
     "build": "npm --prefix bookwise run build",
     "preview": "npm --prefix bookwise run preview",
-    "lint": "npm --prefix bookwise run lint"
+    "lint": "npm --prefix bookwise run lint",
+    "test": "npm --prefix bookwise run test",
+    "test:watch": "npm --prefix bookwise run test:watch"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.90.21",

@@ -33,7 +33,7 @@ logger = logging.getLogger(__name__)
 
 SectionName = Literal["overview", "key_ideas", "chapters", "critique"]
 SCHEMA_VERSION_VALUE = SCHEMA_VERSION
-RETRY_AFTER_MS = 500
+RETRY_AFTER_MS = 2000
 
 
 class GenerationNotFoundError(Exception):
@@ -64,11 +64,22 @@ class GenerationPreviouslyFailedError(Exception):
         super().__init__("Generation previously failed")
 
 
+class GenerationStatusNotFoundError(Exception):
+    pass
+
+
 _SECTION_MODEL_MAP = {
     "overview": OverviewOut,
     "key_ideas": KeyIdeasOut,
     "chapters": ChaptersOut,
     "critique": CritiqueOut,
+}
+
+_SECTION_MAX_OUTPUT_TOKENS: dict[SectionName, int] = {
+    "overview": 800,
+    "key_ideas": 800,
+    "critique": 1000,
+    "chapters": 2200,
 }
 
 
@@ -101,6 +112,10 @@ def _parse_and_validate_content(section: SectionName, content: dict[str, Any]) -
     model = _SECTION_MODEL_MAP[section]
     parsed = model.model_validate(content)
     return parsed.model_dump()
+
+
+def _get_section_max_output_tokens(section: SectionName) -> int:
+    return _SECTION_MAX_OUTPUT_TOKENS[section]
 
 
 def _find_generation(
@@ -389,7 +404,7 @@ async def generate_section(
                 prompt=prompt,
                 json_schema=_get_json_schema(valid_section),
                 temperature=config.temperature,
-                max_output_tokens=config.max_output_tokens,
+                max_output_tokens=_get_section_max_output_tokens(valid_section),
                 request_id=request_id,
                 cache_key=f"{book_id}:{valid_section}:{PROMPT_VERSION}:{provider}:{model}",
             )
@@ -496,4 +511,45 @@ async def generate_section(
             "stored": False,
             "status": "complete",
             "content": refreshed.content_json,
+        }
+
+
+def get_generation_status(*, book_id: str, section: str) -> dict[str, Any]:
+    valid_section = _validate_section(section)
+    config = get_app_config().llm
+    provider = config.provider
+    model = config.model
+
+    db_session.init_db()
+    with Session(db_session.engine) as session:
+        row = _find_generation(
+            session,
+            book_id=book_id,
+            section=valid_section,
+            prompt_version=PROMPT_VERSION,
+            provider=provider,
+            model=model,
+        )
+        if row is None:
+            raise GenerationStatusNotFoundError()
+
+        if row.status == "pending":
+            return {
+                "status": "pending",
+                "in_progress": True,
+                "retry_after_ms": RETRY_AFTER_MS,
+            }
+
+        if row.status == "complete":
+            return {
+                "status": "complete",
+                "stored": True,
+                "updated_at": row.updated_at.isoformat() if row.updated_at else None,
+                "retry_after_ms": None,
+            }
+
+        return {
+            "status": "failed",
+            "error_code": row.error_code,
+            "retry_after_ms": None,
         }

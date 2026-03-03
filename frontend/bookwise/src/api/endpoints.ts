@@ -10,6 +10,8 @@ export const endpoints = {
   book: (workId: string) => `/api/books/${encodeURIComponent(workId)}`,
   generateSection: (workId: string, section: string) =>
     `/api/books/${encodeURIComponent(workId)}/generate/${encodeURIComponent(section)}`,
+  generationStatus: (workId: string, section: string) =>
+    `/api/books/${encodeURIComponent(workId)}/generations/${encodeURIComponent(section)}/status`,
 } as const;
 
 export function normalizeWorkId(value: unknown): string | null {
